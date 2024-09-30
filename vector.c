@@ -15,6 +15,20 @@ vec minus_vec(vec *a, vec *b) {
     return result;
 } 
 
+vec polar_coord(double length, double radian) {
+    vec position;
+    position.x = length*cos(radian);
+    position.y = length*sin(radian);
+    return position;
+}
+
+vec times_vec(vec *a, double times) {
+    vec result;
+    result.x = a->x*times;
+    result.y = a->y*times;
+    return result;
+}
+
 double norm(vec *a) {
     return sqrt(pow(a->x, 2) + pow(a->y, 2));
 }

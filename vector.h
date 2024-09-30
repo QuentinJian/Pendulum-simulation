@@ -8,9 +8,11 @@ typedef struct _vec { //define a new structure called vec (vector)
 } vec;
 
 
-vec add_vec(struct vec *a, struct vec *b);
-vec minus_vec(struct vec *a, struct vec *b);
+vec add_vec(vec *a, vec *b);
+vec minus_vec(vec *a, vec *b);
+vec times_vec(vec *a, double times);
+vec polar_coord(double length, double radian); //transfer from polar coord to position vector ralative to origin
 double norm(vec *a);
-double dot(struct vec *a, struct vec *b);
+double dot(vec *a, vec *b);
 
 #endif
