@@ -22,10 +22,10 @@ vec polar_coord(double length, double radian) {
     return position;
 }
 
-vec scale_vec(vec *a, double times) {
+vec scale_vec(vec a, double times) {
     vec result;
-    result.x = a->x*times;
-    result.y = a->y*times;
+    result.x = a.x * times;
+    result.y = a.y * times;
     return result;
 }
 

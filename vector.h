@@ -10,7 +10,7 @@ typedef struct _vec { //define a new structure called vec (vector)
 
 vec add_vec(vec a, vec b);
 vec minus_vec(vec *a, vec *b);
-vec scale_vec(vec *a, double times);
+vec scale_vec(vec a, double times);
 vec polar_coord(double length, double radian); //transfer from polar coord to position vector ralative to origin
 vec norm(vec a);
 double mag(vec a);
