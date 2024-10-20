@@ -64,21 +64,24 @@ def RK4(state:State, t, h):
     t += h
     return state, t
 
+# def calc_initspeed(pos:vector):
+    
+
 
 scene = canvas(centor=vector(0, -1.0, 0), background=vector(0.5, 0.5, 0))
-ceiling = box(length=1, width=1, height=0.01, color=color.blue)
-ball1 = sphere(radius=0.1, color=color.red, make_trail=True)
+pinpoint = sphere(radius=0.1, color=color.green, make_trail=False)
+ball1 = sphere(radius=0.1, color=color.red, make_trail=False)
 
 g1 = graph(title='phase space', xtitle='p', ytitle='x')
 gc = gcurve(color=color.black)
 
 ball1.pos = vector(2, 0, 0)
 ball1.m = 0.5
-ball1.v = vector(0, 0, 0)
+ball1.v = vector(0, -15, 0)
 
 line1 = cylinder(radius=0.01)
-line1.pos = ceiling.pos
-line1.axis = ball1.pos - ceiling.pos
+line1.pos = pinpoint.pos
+line1.axis = ball1.pos - pinpoint.pos
 line1.L = line1.length
 
 ball_state = State(ball1.pos, ball1.v, vec(0, 0, 0))
@@ -87,9 +90,10 @@ ball_state = State(ball1.pos, ball1.v, vec(0, 0, 0))
 while True:
     rate(1000)
     # F1 = -K * (line1.length-line1.L) * line1.axis.norm()
-    ball_state, t = RK4(ball_state, t, 0.01)
+    ball_state, t = RK4(ball_state, t, 0.1)
     # ball1.a = vector(0, -g, 0) + ball_state.dv
     # ball1.v = ball_state.v + ball1.a * dt
     ball1.pos = ball_state.pos
     line1.axis = ball1.pos - line1.pos
     gc.plot(ball_state.v.x / ball1.m, ball_state.pos.x)
+
