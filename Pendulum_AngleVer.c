@@ -43,28 +43,51 @@ void RK4(State *state, double dt, double length) {
 }
 
 int main() {
-    State state = {3.14159/4, 1}; 
+    State state = {3.14159/4, 0}; 
     double length = 1.0; 
     double t = 0.0;
     double dt = 0.01; 
     
     FILE *data = fopen("pendulum_simulation.csv", "w+");
     fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
-
     while (t < 10.0) {
         fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
         RK4(&state, dt, length);
         t += dt;
     }
     fclose(data);
-
-    FILE *data = fopen("pendulum_simulation.cse", "w+");
-    while (t < 10.0)
-    {
+    t = 0;
+    state.theta = 3.14*(2.0/3.0);
+    state.omega = 0; 
+    data = fopen("pendulum_simulation_pi6.csv", "w+");
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
         fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
         RK4(&state, dt, length);
         t += dt;
     }
-    
+    fclose(data);
+    t = 0;
+    state.theta = 3.14159;
+    state.omega = 0;
+    data = fopen("pendulum_simulation_pi.csv", "w+");
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
+        fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
+        RK4(&state, dt, length);
+        t += dt;
+    }
+    fclose(data);
+    state.theta = -3.14159;
+    state.omega = 0;
+    data = fopen("pendulum_simulation_pi_m.csv", "w+");
+    t = 0;
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
+        fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
+        RK4(&state, dt, length);
+        t += dt;
+    }
+    fclose(data);
     return 0;
 }
