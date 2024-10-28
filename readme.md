@@ -14,13 +14,13 @@ flowchart LR
 
 龍格-庫塔法（英文：Runge-Kutta methods）是用於非線性常微分方程的解的重要的一類隱式或顯式迭代法。[^1]
 
-$$
+$
 \\ \displaystyle k_{1}=f\left(t_{n},y_{n}\right)\\ \displaystyle k_{2}=f\left(t_{n}+{h \over 2},y_{n}+{h\over 2}k_{1}\right)
 \\ \displaystyle k_{3}=f\left(t_{n}+{h \over 2},y_{n}+{h \over 2}k_{2}\right)
 \\ \displaystyle k_{4}=f\left(t_{n}+h,y_{n}+hk_{3}\right)
 \\ 
 \begin{aligned}y_{n+1}&=y_{n}+{\frac {h}{6}}\left(k_{1}+2k_{2}+2k_{3}+k_{4}\right),\\t_{n+1}&=t_{n}+h\\\end{aligned}
-$$
+$
 $k_1, k_2, k_3, k_4$ 皆為導數
 
 上面的數學式用C語言實做出來後便成為
