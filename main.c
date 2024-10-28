@@ -1,89 +1,90 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
-#include "vector.h"
 
-double k = 100000; 
-double m = 1;     
-double x0 = 10;   
-vec extend;
-vec gravity = {0, -9.8};  
+#define G 9.81 
 
-typedef struct State {
-    vec pos;
-    vec v;
-    vec a;
+
+typedef struct {
+    double theta; 
+    double omega; 
 } State;
 
-typedef struct Derivative {
-    vec dr;
-    vec dv;
+
+typedef struct {
+    double dtheta; 
+    double domega; 
 } Derivative;
 
-vec force_func(double k, double x0, vec extend) {
-    vec unit_extend = norm(extend);
-    return scale_vec(unit_extend, -k * (mag(extend) - x0)); 
-}
 
-Derivative evaluate(State *initial, double t, double dt, Derivative derivative) {
-    State state;
-    state.pos = add_vec(initial->pos, scale_vec(derivative.dr, dt));
-    state.v = add_vec(initial->v, scale_vec(derivative.dv, dt));
-    
+Derivative evaluate(State *state, double length) {
     Derivative output;
-    output.dr = state.v;
-    
-    vec F = add_vec(force_func(k, x0, extend), gravity);
-    vec a = scale_vec(F, 1.0 / m); // acceleration = F / m
-    
-    output.dv = a;
+    output.dtheta = state->omega;
+    output.domega = -(G / length) * sin(state->theta);
     return output;
 }
 
-double RK4(State *cur_state, double t, double h) {
+void RK4(State *state, double dt, double length) {
     Derivative k1, k2, k3, k4;
-    Derivative cur_derivative = {cur_state->v, cur_state->a};
+
+    k1 = evaluate(state, length);
+    State state1 = {state->theta + 0.5 * dt * k1.dtheta, state->omega + 0.5 * dt * k1.domega};
+    k2 = evaluate(&state1, length);
+    State state2 = {state->theta + 0.5 * dt * k2.dtheta, state->omega + 0.5 * dt * k2.domega};
+    k3 = evaluate(&state2, length);
+    State state3 = {state->theta + dt * k3.dtheta, state->omega + dt * k3.domega};
+    k4 = evaluate(&state3, length);
     
-    k1 = evaluate(cur_state, t, 0, cur_derivative);
-    k2 = evaluate(cur_state, t, h/2, k1);
-    k3 = evaluate(cur_state, t, h/2, k2);
-    k4 = evaluate(cur_state, t, h, k3);
-    
-    vec total_dr = scale_vec(add_vec(add_vec(scale_vec(k1.dr, 1), scale_vec(k2.dr, 2)), add_vec(scale_vec(k3.dr, 2), scale_vec(k4.dr, 1))), 1.0 / 6);
-    vec total_dv = scale_vec(add_vec(add_vec(scale_vec(k1.dv, 1), scale_vec(k2.dv, 2)), add_vec(scale_vec(k3.dv, 2), scale_vec(k4.dv, 1))), 1.0 / 6);
-    
-    cur_state->v = add_vec(cur_state->v, scale_vec(total_dv, h));
-    cur_state->pos = add_vec(cur_state->pos, scale_vec(total_dr, h));
-    
-    return t + h;
+    state->theta += (dt / 6.0) * (k1.dtheta + 2.0 * k2.dtheta + 2.0 * k3.dtheta + k4.dtheta);
+    state->omega += (dt / 6.0) * (k1.domega + 2.0 * k2.domega + 2.0 * k3.domega + k4.domega);
 }
 
 int main() {
-    FILE *data;
-    double time = 0;
-    double dt = 0.01; // Decrease time step for better accuracy
-    vec item_pos = {0, 10};  
-    vec rope_start = {0.0, 0.0}; 
+    State state = {3.14159/4, 0}; 
+    double length = 1.0; 
+    double t = 0.0;
+    double dt = 0.01; 
     
-    extend = minus_vec(&item_pos, &rope_start); 
-    x0 = mag(extend);  
-    
-    data = fopen("simulation_data.csv", "w+"); 
-    fprintf(data, "TIME,POSITION_X,POSITION_Y,VELOCITY_X,VELOCITY_Y,ACCELERATION_X,ACCELERATION_Y\n");
-    
-    State cur_state = {item_pos, {0, 0}, {0, 0}};  
-    extend = minus_vec(&cur_state.pos, &rope_start);  
-    
-    while (time < 10) {  
-        extend = minus_vec(&cur_state.pos, &rope_start);
-        
-        vec F = add_vec(force_func(k, x0, extend), gravity);
-        cur_state.a = scale_vec(F, 1.0 / m);
-        
-        time = RK4(&cur_state, time, dt);
-        fprintf(data, "%.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", time, cur_state.pos.x, cur_state.pos.y, cur_state.v.x, cur_state.v.y, cur_state.a.x, cur_state.a.y);
+    FILE *data = fopen("pendulum_simulation.csv", "w+");
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
+        fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
+        RK4(&state, dt, length);
+        t += dt;
     }
-    
+    fclose(data);
+    t = 0;
+    state.theta = 3.14*(2.0/3.0);
+    state.omega = 0; 
+    data = fopen("pendulum_simulation_pi6.csv", "w+");
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
+        fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
+        RK4(&state, dt, length);
+        t += dt;
+    }
+    fclose(data);
+    t = 0;
+    state.theta = 3.14159;
+    state.omega = 0;
+    data = fopen("pendulum_simulation_pi.csv", "w+");
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
+        fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
+        RK4(&state, dt, length);
+        t += dt;
+    }
+    fclose(data);
+    state.theta = -3.14159;
+    state.omega = 0;
+    data = fopen("pendulum_simulation_pi_m.csv", "w+");
+    t = 0;
+    fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
+    while (t < 10.0) {
+        fprintf(data, "%.2f, %.6f, %.6f\n", t, state.theta, state.omega);
+        RK4(&state, dt, length);
+        t += dt;
+    }
     fclose(data);
     return 0;
 }
