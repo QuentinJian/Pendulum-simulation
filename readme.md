@@ -7,7 +7,7 @@ flowchart LR
   
 ```
 
-![https://github.com/QuentinJian/Pendulum-simulation/blob/d0d3d751f1fdb5598b5ad261b96aed5d708f5084/Phase%20Space.png]
+![Phase Space](https://github.com/QuentinJian/Pendulum-simulation/blob/main/Phase%20Space.png) 
 
 ## 程式介紹
 ### Runge Kutta 4
