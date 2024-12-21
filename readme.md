@@ -24,20 +24,31 @@ $
 $k_1, k_2, k_3, k_4$ 皆為導數
 
 上面的數學式用C語言實做出來後便成為
+
 ```c
 void RK4(State *state, double dt, double length) {
-    Derivative k1, k2, k3, k4;
-
-    k1 = evaluate(state, length);
-    State state1 = {state->theta + 0.5 * dt * k1.dtheta, state->omega + 0.5 * dt * k1.domega};
-    k2 = evaluate(&state1, length);
-    State state2 = {state->theta + 0.5 * dt * k2.dtheta, state->omega + 0.5 * dt * k2.domega};
-    k3 = evaluate(&state2, length);
-    State state3 = {state->theta + dt * k3.dtheta, state->omega + dt * k3.domega};
-    k4 = evaluate(&state3, length);
+    State initial = *state;
     
-    state->theta += (dt / 6.0) * (k1.dtheta + 2.0 * k2.dtheta + 2.0 * k3.dtheta + k4.dtheta);
-    state->omega += (dt / 6.0) * (k1.domega + 2.0 * k2.domega + 2.0 * k3.domega + k4.domega);
+    Derivative k1 = evaluate(initial, length);
+    
+    State temp = {
+        .theta = initial.theta + (k1.dtheta * dt/2),
+        .omega = initial.omega + (k1.domega * dt/2)
+    };
+    Derivative k2 = evaluate(temp, length);
+    
+    temp.theta = initial.theta + (k2.dtheta * dt/2);
+    temp.omega = initial.omega + (k2.domega * dt/2);
+    Derivative k3 = evaluate(temp, length);
+    
+    temp.theta = initial.theta + (k3.dtheta * dt);
+    temp.omega = initial.omega + (k3.domega * dt);
+    Derivative k4 = evaluate(temp, length);
+    
+    state->theta = initial.theta + (dt/6.0) * 
+        (k1.dtheta + 2*k2.dtheta + 2*k3.dtheta + k4.dtheta);
+    state->omega = initial.omega + (dt/6.0) * 
+        (k1.domega + 2*k2.domega + 2*k3.domega + k4.domega);
 }
 ```
 
@@ -51,7 +62,8 @@ fprintf(data, "TIME,ANGLE,ANGULAR_VELOCITY\n");
 
 ```mermaid
   graph TD;
-      Pendumlum_Angler.c --寫入資料--> pendulum_simulation.cwv;
+      main.c --寫入資料--> SimulationResult(Mode)\pendulum_simulation.csv;
 ```
 
 [^1] https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+[^2] 

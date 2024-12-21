@@ -41,31 +41,43 @@ def acceleration(ball, F:vector):
     return F/ball.m
 
 
-def evaluate(initial:State, t, dt, derivative:Derivative)->State:
+def evaluate(initial:State, t, dt, derivative:Derivative)->Derivative:
     state = State()
     state.pos = initial.pos + derivative.dr*dt
     state.v = initial.v + derivative.dv*dt
+    
     output = Derivative()
     output.dr = state.v
-    F1 = -K * (line1.length-line1.L) * line1.axis.norm() + vector(0, -g, 0)
-    output.dv = acceleration(ball1, F1)
+    
+    line_vec = state.pos - pinpoint.pos
+    line_len = mag(line_vec)
+    line_direct = line_vec/line_len
+    F1 = -K * (line_len-line1.L) * line_direct + vector(0, -g*ball1.m, 0)
+    output.dv = F1/ball1.m
     return output
-
 
 def RK4(state:State, t, h):
     k1 = evaluate(state, t, 0, Derivative())
     k2 = evaluate(state, t, h/2, k1)
     k3 = evaluate(state, t, h/2, k2)
     k4 = evaluate(state, t, h, k3)
-    total_d = (k1 + k2*2 + k3*2 + k4) * (h/6)
-    state.pos = state.pos + total_d.dr*h
-    state.v = state.v + total_d.dv * h
-    state.a = total_d.dv
-    t += h
+    
+    total_d = (k1 + k2*2 + k3*2 + k4)/6
+    state.pos = state.pos + total_d.dr*h 
+    state.v = state.v + total_d.dv*h
+    t+=h
     return state, t
 
-# def calc_initspeed(pos:vector):
-    
+
+dt = 0.001  
+
+def calculate_energy(state):
+    kinetic_energy = 0.5 * ball1.m * mag(state.v)**2
+    potential_energy = ball1.m * g * state.pos.y
+    return  kinetic_energy + potential_energy
+
+g2 = graph(title='Total Energy')
+energy_curve = gcurve(color=color.blue)
 
 
 scene = canvas(centor=vector(0, -1.0, 0), background=vector(0.5, 0.5, 0))
@@ -77,7 +89,7 @@ gc = gcurve(color=color.black)
 
 ball1.pos = vector(2, 0, 0)
 ball1.m = 0.5
-ball1.v = vector(0, -15, 0)
+ball1.v = vector(0, 0, 0)
 
 line1 = cylinder(radius=0.01)
 line1.pos = pinpoint.pos
@@ -89,11 +101,10 @@ ball_state = State(ball1.pos, ball1.v, vec(0, 0, 0))
 
 while True:
     rate(1000)
-    # F1 = -K * (line1.length-line1.L) * line1.axis.norm()
-    ball_state, t = RK4(ball_state, t, 0.1)
-    # ball1.a = vector(0, -g, 0) + ball_state.dv
-    # ball1.v = ball_state.v + ball1.a * dt
+    ball_state, t = RK4(ball_state, t, dt)
     ball1.pos = ball_state.pos
     line1.axis = ball1.pos - line1.pos
-    gc.plot(ball_state.v.x / ball1.m, ball_state.pos.x)
-
+    
+    # Plot phase space and energy
+    gc.plot(ball_state.v.x/ball1.m, ball_state.pos.x)
+    energy_curve.plot(t, calculate_energy(ball_state))
