@@ -1,110 +1,110 @@
 from vpython import *
+import math
 
-g = 9.8
-dt  = 0.0001
-t = 0
-K = 1000.0
+g = 9.81
+L = 1.0
+dt = 0.01
 
-class State:
-    def __init__(self, pos=vector(0, 0, 0), v=vector(0, 0, 0), a=vector(0, 0, 0)) -> None:
-        self.pos = pos
-        self.v = v
-        self.a = a
+scene = canvas(title="Pendulum Simulation", width=800, height=600)
+
+pivot = vector(0, 0, 0)
+pivot_sphere = sphere(pos=pivot, radius=0.05, color=color.green)
+
+
+class PendulumState:
+    def __init__(self, theta=0.0, omega=0.0):
+        self.theta = theta
+        self.omega = omega
+
 
 class Derivative:
-    def __init__(self, dr=vector(0, 0, 0), dv=vector(0, 0, 0))->None:
-        self.dr = dr
-        self.dv = dv
+    def __init__(self, dtheta=0.0, domega=0.0):
+        self.dtheta = dtheta
+        self.domega = domega
 
-    def __add__(self, other):
-        dr = self.dr + other.dr
-        dv = self.dv + other.dv
-        return Derivative(dr, dv)
+
+def evaluate(state, dt, k: Derivative):
+    temp_theta = state.theta + k.dtheta * dt
+    temp_omega = state.omega + k.domega * dt
     
-    def __mul__(self, other):
-        dr = self.dr * other
-        dv = self.dv * other
-        return Derivative(dr, dv)
+    out = Derivative()
+    out.dtheta = temp_omega
+    out.domega = -(g/L)*math.sin(temp_theta)
+    return out
+
+def RK4(state: PendulumState, h):
+    k1 = evaluate(state, 0, Derivative())
+    k2 = evaluate(state, h/2, k1)
+    k3 = evaluate(state, h/2, k2)
+    k4 = evaluate(state, h, k3)
     
-    def __truediv__(self, other):
-        dr = self.dr / other
-        dv = self.dv / other
-        return Derivative(dr, dv)
-    
-
-def collide(v1, v2, m1, m2):
-    v1f = v1*(m1-m2)/(m1+m2) + v2*2*m2/(m1+m2)
-    v2f = v1*2*m1/(m2+m1) + v2*(m2-m1)/(m2+m1)
-    return v1f, v2f
-
-def acceleration(ball, F:vector):
-    return F/ball.m
+    state.theta += (h/6.0) * (k1.dtheta + 2*k2.dtheta + 2*k3.dtheta + k4.dtheta)
+    state.omega += (h/6.0) * (k1.domega + 2*k2.domega + 2*k3.domega + k4.domega)
 
 
-def evaluate(initial:State, t, dt, derivative:Derivative)->Derivative:
-    state = State()
-    state.pos = initial.pos + derivative.dr*dt
-    state.v = initial.v + derivative.dv*dt
-    
-    output = Derivative()
-    output.dr = state.v
-    
-    line_vec = state.pos - pinpoint.pos
-    line_len = mag(line_vec)
-    line_direct = line_vec/line_len
-    F1 = -K * (line_len-line1.L) * line_direct + vector(0, -g*ball1.m, 0)
-    output.dv = F1/ball1.m
-    return output
-
-def RK4(state:State, t, h):
-    k1 = evaluate(state, t, 0, Derivative())
-    k2 = evaluate(state, t, h/2, k1)
-    k3 = evaluate(state, t, h/2, k2)
-    k4 = evaluate(state, t, h, k3)
-    
-    total_d = (k1 + k2*2 + k3*2 + k4)/6
-    state.pos = state.pos + total_d.dr*h 
-    state.v = state.v + total_d.dv*h
-    t+=h
-    return state, t
+bob = sphere(radius=0.1, color=color.red)
+rod = cylinder(radius=0.01, color=color.white)
 
 
-dt = 0.001  
+graph_phase_space = graph(title="Phase Space", width=800, height=400, xtitle="theta", ytitle="omega")
+gc = gdots(graph=graph_phase_space, color=color.blue)
 
-def calculate_energy(state):
-    kinetic_energy = 0.5 * ball1.m * mag(state.v)**2
-    potential_energy = ball1.m * g * state.pos.y
-    return  kinetic_energy + potential_energy
+theta_slider = slider(min=-math.pi, max=math.pi, value=math.pi/4, length=200, bind=None, right=15)
+theta_text = wtext(text=f" Theta = {theta_slider.value:.2f} rad  ")
 
-g2 = graph(title='Total Energy')
-energy_curve = gcurve(color=color.blue)
+omega_slider = slider(min=-5, max=5, value=0, length=200, bind=None, right=15)
+omega_text = wtext(text=f" Omega = {omega_slider.value:.2f} rad/s  ")
 
+pause = False
 
-scene = canvas(centor=vector(0, -1.0, 0), background=vector(0.5, 0.5, 0))
-pinpoint = sphere(radius=0.1, color=color.green, make_trail=False)
-ball1 = sphere(radius=0.1, color=color.red, make_trail=False)
+def update_labels():
+    theta_text.text = f" Theta = {theta_slider.value:.2f} rad  "
+    omega_text.text = f" Omega = {omega_slider.value:.2f} rad/s  "
 
-g1 = graph(title='phase space', xtitle='p', ytitle='x')
-gc = gcurve(color=color.black)
+def change_simulation(evt):
+    global pendulum_state, t
+    pendulum_state.theta = theta_slider.value
+    pendulum_state.omega = omega_slider.value
+    t = 0
+    update_labels()
 
-ball1.pos = vector(2, 0, 0)
-ball1.m = 0.5
-ball1.v = vector(0, 0, 0)
+def reset_simulation(evt):
+    global pendulum_state, t
+    pendulum_state.theta = math.pi/4
+    pendulum_state.omega = 0
+    t = 0
+    gc.delete()
+    update_labels()
 
-line1 = cylinder(radius=0.01)
-line1.pos = pinpoint.pos
-line1.axis = ball1.pos - pinpoint.pos
-line1.L = line1.length
+def pause_simulation(evt):
+    global pause
+    pause = not pause
 
-ball_state = State(ball1.pos, ball1.v, vec(0, 0, 0))
+button(text="Change Condition", bind=change_simulation)
+button(text="Reset Simulation", bind=reset_simulation)
+button(text="Pause Simulation", bind=pause_simulation)
 
+pendulum_state = PendulumState(theta_slider.value, omega_slider.value)
+t = 0
 
 while True:
-    rate(1000)
-    ball_state, t = RK4(ball_state, t, dt)
-    ball1.pos = ball_state.pos
-    line1.axis = ball1.pos - line1.pos
-    
-    # Plot phase space and energy
-    gc.plot(ball_state.v.x/ball1.m, ball_state.pos.x)
-    energy_curve.plot(t, calculate_energy(ball_state))
+    if pause:
+        continue
+
+    rate(100)
+    RK4(pendulum_state, dt)
+    t += dt
+
+    x = L * math.sin(pendulum_state.theta)
+    y = -L * math.cos(pendulum_state.theta)
+
+    if (pendulum_state.theta > 2*math.pi):
+        pendulum_state.theta = -pendulum_state.theta
+    elif (pendulum_state.theta < -2*math.pi):
+        pendulum_state.theta = -pendulum_state.theta
+
+    bob.pos = vector(x, y, 0)
+    rod.pos = pivot
+    rod.axis = bob.pos - pivot
+    update_labels()
+    gc.plot(pos=(pendulum_state.theta, pendulum_state.omega))
